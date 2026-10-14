@@ -61,6 +61,7 @@ export function main(bs: StaticArray<u8>): void {
     supply,
     taxRate,
     new Address('0'),
+    Context.caller(), // receives the initial supply
   );
 
   floorToken.floor.raiseRoof(10);

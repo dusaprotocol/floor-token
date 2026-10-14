@@ -6,6 +6,7 @@ import {
   createEvent,
   Context,
   call,
+  balance,
 } from '@massalabs/massa-as-sdk';
 import { Args } from '@massalabs/as-types';
 import { IMyFloorToken } from '../interfaces/IMyFloorToken';
@@ -20,6 +21,10 @@ export function constructor(): void {
 }
 
 export function deploy(bs: StaticArray<u8>): void {
+  // The caller pays for the whole deployment (storage, coins sent to the token, calls): the
+  // deployer's own balance must not decrease, and whatever the caller sent in excess is refunded.
+  const balanceBefore = balance() - Context.transferredCoins();
+
   const floorWasm: StaticArray<u8> = fileToByteArray('build/MyFloorToken.wasm');
   const myFloor = new IMyFloorToken(createSC(floorWasm));
   transferCoins(myFloor._origin, 11 * ONE_COIN); // 10 to create LB pair + 1 to pay fees
@@ -56,6 +61,7 @@ export function deploy(bs: StaticArray<u8>): void {
     initialSupply,
     taxRate,
     taxRecipient,
+    Context.caller(), // receives the initial supply (not this deployer)
   );
 
   call(
@@ -66,4 +72,12 @@ export function deploy(bs: StaticArray<u8>): void {
   );
 
   generateEvent(createEvent('NEW_FLOOR', [myFloor._origin.toString()]));
+
+  const balanceAfter = balance();
+  assert(
+    balanceAfter >= balanceBefore,
+    'not enough coins sent to pay for the deployment',
+  );
+  const refund = balanceAfter - balanceBefore;
+  if (refund > 0) transferCoins(Context.caller(), refund);
 }

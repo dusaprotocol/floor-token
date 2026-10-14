@@ -144,10 +144,10 @@ export function calculateNewFloorId(_: StaticArray<u8>): StaticArray<u8> {
 
   const token = new IMyFloorToken(Context.callee());
   const _totalSupply = token.totalSupply();
-  const taxRecipientBalance = token.balanceOf(token.transferTax.taxRecipient());
+  // every token outside the pair (including the tax recipient's) can be sold into the floor
   const floorInCirculation = SafeMath256.sub(
-    SafeMath256.sub(_totalSupply, res.totalFloorInPair),
-    taxRecipientBalance,
+    _totalSupply,
+    res.totalFloorInPair,
   );
 
   return u32ToBytes(
