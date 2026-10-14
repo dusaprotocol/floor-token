@@ -158,3 +158,15 @@ Instead, FLOOR allows you to mint and seed liqiudity to any number of bins you w
 - You can only seed to consecutive bins  
 
 For example, if the last bin seeded was bin 120 with 100 FLOOR, then the protocol can call the function `raiseRoof(10)`, which will seed bins 121–130 each with 100 FLOOR.
+
+## Owner Powers and Upgrades
+
+The account that creates a FLOOR token is its owner. Before buying a FLOOR token, check who owns it: the floor protects holders against selling pressure, not against its owner.
+
+- **Mint and burn**: the owner can mint new tokens and burn tokens. Minted tokens add to the circulating supply, which the floor must cover, so minting can lower the RFV.
+- **Transfer tax**: the owner can change the tax rate and the tax recipient. The tax recipient's balance counts as circulating supply, since it can be sold.
+- **Delayed upgrades**: the owner can replace the token's code in two steps. `proposeUpgrade(bytecode)` announces the new code (its sha256 and the time from which it can be applied are returned by `pendingUpgrade`). `upgrade(bytecode)` applies exactly that code, and only once `UPGRADE_DELAY` (7 days) has passed. `cancelUpgrade` withdraws a proposal. An `UPGRADE_PROPOSED` event is emitted, so holders can see a pending upgrade and exit before it applies.
+
+## Deployment
+
+The deployer contract (`deployer.ts`) creates the token, gives the initial supply to the caller and makes the caller the owner. The caller pays for the whole deployment (storage and the coins sent to the token): any coins sent above the cost are refunded in the same operation.
