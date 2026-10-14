@@ -494,23 +494,14 @@ export function _rebalanceFloor(): bool {
   // tokenY reserves owned for each bin
   const res = _getAmountsInPair(_floorId, _activeId, _roofId);
 
-  // Calculate the amount of tokens in circulation, which is the total supply minus the tokens that are
-  // in the pair and minus the tax recipient balance (which should not count as circulating supply).
+  // Calculate the amount of tokens in circulation: the total supply minus the tokens that are in
+  // the pair. Every other balance (including the tax recipient's) can be sold into the floor, so it
+  // must be covered by the floor reserves.
   const _totalSupply = totalSupply();
-  const _floorInCirculation = SafeMath256.sub(
+  const floorInCirculation = SafeMath256.sub(
     _totalSupply,
     res.totalFloorInPair,
   );
-
-  // Get the tax recipient balance and exclude it from circulation
-  const taxRecipientAddress = new Address(
-    bytesToString(Storage.get(TAX_RECIPIENT)),
-  );
-  const taxRecipientBalance = balanceOf(taxRecipientAddress);
-  const floorInCirculation =
-    _floorInCirculation > taxRecipientBalance
-      ? SafeMath256.sub(_floorInCirculation, taxRecipientBalance)
-      : u256.Zero;
 
   // Calculate the new floor id
   const newFloorId = _calculateNewFloorId(
